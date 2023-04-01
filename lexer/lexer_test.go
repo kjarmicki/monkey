@@ -94,3 +94,33 @@ let result = add(five, ten);`
 		assert.Equal(t, tt.expectedLiteral, tok.Literal)
 	}
 }
+
+func TestNextTokenOperators(t *testing.T) {
+	input := `!-/*5
+5 < 10 > 5`
+
+	tests := []struct {
+		expectedType    token.TokenType
+		expectedLiteral string
+	}{
+		{token.BANG, "!"},
+		{token.MINUS, "-"},
+		{token.SLASH, "/"},
+		{token.ASTERISK, "*"},
+		{token.INT, "5"},
+		{token.INT, "5"},
+		{token.LT, "<"},
+		{token.INT, "10"},
+		{token.GT, ">"},
+		{token.INT, "5"},
+		{token.EOF, ""},
+	}
+
+	l := New(input)
+
+	for _, tt := range tests {
+		tok := l.NextToken()
+		assert.Equal(t, tt.expectedType, tok.Type)
+		assert.Equal(t, tt.expectedLiteral, tok.Literal)
+	}
+}
