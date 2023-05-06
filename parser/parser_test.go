@@ -46,6 +46,15 @@ func TestReturnStatement(t *testing.T) {
 	testReturnStatement(t, program.Statements[0], "993322")
 }
 
+func testLetStatement(t *testing.T, s ast.Statement, name string) {
+	t.Helper()
+	assert.Equal(t, s.TokenLiteral(), "let")
+	letStmt, ok := s.(*ast.LetStatement)
+	assert.True(t, ok)
+	assert.Equal(t, name, letStmt.Name.Value)
+	assert.Equal(t, name, letStmt.Name.TokenLiteral())
+}
+
 func TestIdentifierExpression(t *testing.T) {
 	input := "foobar;"
 
@@ -59,13 +68,17 @@ func TestIdentifierExpression(t *testing.T) {
 	testIdentifierExpression(t, program.Statements[0], "foobar")
 }
 
-func testLetStatement(t *testing.T, s ast.Statement, name string) {
-	t.Helper()
-	assert.Equal(t, s.TokenLiteral(), "let")
-	letStmt, ok := s.(*ast.LetStatement)
-	assert.True(t, ok)
-	assert.Equal(t, name, letStmt.Name.Value)
-	assert.Equal(t, name, letStmt.Name.TokenLiteral())
+func TestIntegerLiteralExpression(t *testing.T) {
+	input := "5;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	assert.NotNil(t, program, "ParseProgram() returned nil")
+	assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+	testIntegerLiteralExpression(t, program.Statements[0], "5", 5)
 }
 
 func testReturnStatement(t *testing.T, s ast.Statement, name string) {
@@ -83,6 +96,16 @@ func testIdentifierExpression(t *testing.T, s ast.Statement, name string) {
 	assert.True(t, ok)
 	assert.Equal(t, name, ident.Value)
 	assert.Equal(t, name, ident.TokenLiteral())
+}
+
+func testIntegerLiteralExpression(t *testing.T, s ast.Statement, name string, value int64) {
+	t.Helper()
+	stmt, ok := s.(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	integer, ok := stmt.Expression.(*ast.IntegerLiteral)
+	assert.True(t, ok)
+	assert.Equal(t, value, integer.Value)
+	assert.Equal(t, name, integer.TokenLiteral())
 }
 
 func checkParserErrors(t *testing.T, p *Parser) {
