@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -81,6 +82,28 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	testIntegerLiteralExpression(t, program.Statements[0], "5", 5)
 }
 
+func TestPrefixExpression(t *testing.T) {
+	prefixTests := []struct {
+		input    string
+		operator string
+		integer  int64
+	}{
+		{"!5;", "!", 5},
+		{"-15;", "-", 15},
+	}
+
+	for _, tt := range prefixTests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		assert.NotNil(t, program, "ParseProgram() returned nil")
+		assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+		testPrefixExpression(t, program.Statements[0], tt.operator, tt.integer)
+	}
+}
+
 func testReturnStatement(t *testing.T, s ast.Statement, name string) {
 	t.Helper()
 	assert.Equal(t, s.TokenLiteral(), "return")
@@ -106,6 +129,19 @@ func testIntegerLiteralExpression(t *testing.T, s ast.Statement, name string, va
 	assert.True(t, ok)
 	assert.Equal(t, value, integer.Value)
 	assert.Equal(t, name, integer.TokenLiteral())
+}
+
+func testPrefixExpression(t *testing.T, s ast.Statement, operator string, integer int64) {
+	t.Helper()
+	stmt, ok := s.(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	exp, ok := stmt.Expression.(*ast.PrefixExpression)
+	assert.True(t, ok)
+	assert.Equal(t, operator, exp.Operator)
+	lit, ok := exp.Right.(*ast.IntegerLiteral)
+	assert.True(t, ok)
+	assert.Equal(t, integer, lit.Value)
+	assert.Equal(t, fmt.Sprintf("%d", integer), lit.TokenLiteral())
 }
 
 func checkParserErrors(t *testing.T, p *Parser) {
