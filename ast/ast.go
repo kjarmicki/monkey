@@ -146,7 +146,7 @@ func (il *IntegerLiteral) String() string {
 }
 
 // there are two types of prefixes in Monkey:
-// !n and -n
+// !<expression> and -<expression>
 type PrefixExpression struct {
 	Token    token.Token // the prefix token, e.g. !
 	Operator string      // operator, e.g. "!", TODO: is this needed? maybe use Token.Literal instead?
@@ -164,6 +164,33 @@ func (pe *PrefixExpression) String() string {
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
 	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+	return out.String()
+}
+
+// infix expressions are <expression> <operator> <expression>,
+// where operator can be +, -, /, *, <, >, ==, !=
+type InfixExpression struct {
+	Token    token.Token
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (ie *InfixExpression) expressionNode() {}
+
+func (ie *InfixExpression) TokenLiteral() string {
+	return ie.Token.Literal
+}
+
+func (ie *InfixExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString(" ")
+	out.WriteString(ie.Operator)
+	out.WriteString(" ")
+	out.WriteString(ie.Right.String())
 	out.WriteString(")")
 	return out.String()
 }
