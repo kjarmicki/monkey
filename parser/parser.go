@@ -268,3 +268,36 @@ func (p *Parser) curPrecedence() int {
 	}
 	return LOWEST
 }
+
+/*
+ * Pratt parsing example: 1 + 2 + 3 expression
+ *
+ * 1. parseExpressionStatement calls parseExpression(LOWEST). p.curToken is "1" and p.peekToken is "+""
+ * 2. Is there prefixParseFn associated with p.curToken.Type (which is INT)? Yes, it's parseIntegerLiteral, call it.
+ * parseIntegerLiteral return *ast.IntegerLiteral. parseExpression assigns it to leftExp.
+ * 3. Then there's the for loop in parseExpression. p.peekToken is not a semicolon and peekPrecedence is higher than LOWEST, so we go in.
+ * 4. If there's no infixParseFn for the p.peekToken, we'll just return a leftExp (because it's a prefix expression)
+ * 5. If there is an infixParseFn, we first advance the token so that p.curToken is "+"" and p.peekToken is "2" and then call it, assigning return value to leftExp (reusing variable)
+ * 6. parseInfixExpression gets called with leftExp (containing "1").
+ * It saves the current precedence, advances token and calls p.parseExpression with that precedence.
+ * So, p.curToken is "2", p.peekToken is "3" and we're back to parsing another expression, after the starting "1 + " part.
+ * This time it's different though - precedence passed to parseExpression is the first "+", so it's not smaller than the precedence of p.peekToken, which the second "+" operator.
+ * In this code, the for loop is not executed and *ast.IntegerLiteral representing "2" is returned.
+ * 7. Back in the parseInfixExpression, return value of parseExpression is assigned to Right field.
+ * It means that *ast.InfixExpression now has to ast.IntegerLiteral nodes ("1" and "2").
+ * 8. We're back in the outer-most call to parseExpression with precedence still at LOWEST and another for loop iteration.
+ * 9. Now, leftExp is not *ast.IntegerLiteral of "1" but the *ast.InfixExpression of "1 + 2"
+ * 10. In the body, p.peekToken.Type is the second "+" so parseInfixExpression is called.
+ * 11. parseInfixExpression returns *ast.IntegerLiteral of "3".
+ *
+ * That's it. Now the AST tree looks like this:
+ * [*ast.InfixExpression]
+ *  |  |
+ *  |  [*ast.IntegerLiteral: 3]
+ *  |
+ *  [*ast.InfixExpression]
+ *   |  |
+ *   |  [*ast.IntegerLiteral: 1]
+ *   |
+ *   [*ast.IntegerLiteral: 2]
+ */
