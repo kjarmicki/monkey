@@ -164,25 +164,47 @@ func testIntegerLiteral(t *testing.T, possiblyAnInteger ast.Expression, value in
 	assert.Equal(t, fmt.Sprintf("%d", value), integer.TokenLiteral())
 }
 
-func testPrefixExpression(t *testing.T, s ast.Statement, operator string, integer int64) {
+func testPrefixExpression(t *testing.T, s ast.Statement, operator string, value any) {
 	t.Helper()
 	stmt, ok := s.(*ast.ExpressionStatement)
 	assert.True(t, ok)
 	exp, ok := stmt.Expression.(*ast.PrefixExpression)
 	assert.True(t, ok)
 	assert.Equal(t, operator, exp.Operator)
-	testIntegerLiteral(t, exp.Right, integer)
+	testLiteralExpression(t, exp.Right, value)
 }
 
-func testInfixExpression(t *testing.T, s ast.Statement, leftValue int64, operator string, rightValue int64) {
+func testIdentifier(t *testing.T, exp ast.Expression, value string) {
+	ident, ok := exp.(*ast.Identifier)
+	assert.True(t, ok)
+	assert.Equal(t, value, ident.Value)
+	assert.Equal(t, value, ident.Token.Literal)
+}
+
+func testLiteralExpression(t *testing.T, exp ast.Expression, expected any) {
+	switch v := expected.(type) {
+	case int:
+		testIntegerLiteral(t, exp, int64(v))
+		return
+	case int64:
+		testIntegerLiteral(t, exp, v)
+		return
+	case string:
+		testIdentifier(t, exp, v)
+		return
+	}
+	t.Errorf("type of exp not handled, got %T", exp)
+}
+
+func testInfixExpression(t *testing.T, s ast.Statement, leftValue any, operator string, rightValue any) {
 	t.Helper()
 	stmt, ok := s.(*ast.ExpressionStatement)
 	assert.True(t, ok)
 	exp, ok := stmt.Expression.(*ast.InfixExpression)
 	assert.True(t, ok)
-	testIntegerLiteral(t, exp.Left, leftValue)
+	testLiteralExpression(t, exp.Left, leftValue)
 	assert.Equal(t, operator, exp.Operator)
-	testIntegerLiteral(t, exp.Right, rightValue)
+	testLiteralExpression(t, exp.Right, rightValue)
 }
 
 func checkParserErrors(t *testing.T, p *Parser) {
