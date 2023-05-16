@@ -82,6 +82,19 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	testIntegerLiteralExpression(t, program.Statements[0], "5", 5)
 }
 
+func TestBooleanExpression(t *testing.T) {
+	input := "true;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	assert.NotNil(t, program, "ParseProgram() returned nil")
+	assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+	testBooleanExpression(t, program.Statements[0], true)
+}
+
 func TestPrefixExpression(t *testing.T) {
 	prefixTests := []struct {
 		input    string
@@ -107,10 +120,13 @@ func TestPrefixExpression(t *testing.T) {
 func TestParsingInfixExpressions(t *testing.T) {
 	infixTests := []struct {
 		input      string
-		leftValue  int64
+		leftValue  any
 		operator   string
-		rightValue int64
+		rightValue any
 	}{
+		{"true == true", true, "==", true},
+		{"true != false", true, "!=", false},
+		{"false == false", false, "==", false},
 		{"5 + 5;", 5, "+", 5},
 		{"5 - 5;", 5, "-", 5},
 		{"5 * 5;", 5, "*", 5},
@@ -140,6 +156,76 @@ func testReturnStatement(t *testing.T, s ast.Statement, name string) {
 	assert.True(t, ok)
 }
 
+func TestOperatorPrecedenceParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"true",
+			"true",
+		},
+		{
+			"false",
+			"false",
+		},
+		{
+			"3 > 5 == false",
+			"((3 > 5) == false)",
+		},
+		{
+			"-a * b",
+			"((-a) * b)",
+		},
+		{
+			"!-a",
+			"(!(-a))",
+		},
+		{
+			"a + b + c",
+			"((a + b) + c)",
+		},
+		{
+			"a + b - c",
+			"((a + b) - c)",
+		},
+		{
+			"a * b * c",
+			"((a * b) * c)",
+		},
+		{
+			"a * b / c",
+			"((a * b) / c)",
+		},
+		{
+			"a + b * c + d / e - f",
+			"(((a + (b * c)) + (d / e)) - f)",
+		},
+		{
+			"5 > 4 == 3 < 4",
+			"((5 > 4) == (3 < 4))",
+		},
+		{
+			"3 + 4; -5 * 5",
+			"(3 + 4)((-5) * 5)",
+		},
+		{
+			"3 + 4 * 5 == 3 * 1 + 4 * 5",
+			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		actual := program.String()
+		assert.Equal(t, tt.expected, actual)
+	}
+}
+
 func testIdentifierExpression(t *testing.T, s ast.Statement, name string) {
 	t.Helper()
 	stmt, ok := s.(*ast.ExpressionStatement)
@@ -155,6 +241,19 @@ func testIntegerLiteralExpression(t *testing.T, s ast.Statement, name string, va
 	stmt, ok := s.(*ast.ExpressionStatement)
 	assert.True(t, ok)
 	testIntegerLiteral(t, stmt.Expression, value)
+}
+
+func testBooleanExpression(t *testing.T, s ast.Statement, value bool) {
+	t.Helper()
+	stmt, ok := s.(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	testBoolean(t, stmt.Expression, value)
+}
+
+func testBoolean(t *testing.T, possiblyABoolean ast.Expression, value bool) {
+	boolean, ok := possiblyABoolean.(*ast.Boolean)
+	assert.True(t, ok)
+	assert.Equal(t, value, boolean.Value)
 }
 
 func testIntegerLiteral(t *testing.T, possiblyAnInteger ast.Expression, value int64) {
@@ -191,6 +290,9 @@ func testLiteralExpression(t *testing.T, exp ast.Expression, expected any) {
 		return
 	case string:
 		testIdentifier(t, exp, v)
+		return
+	case bool:
+		testBoolean(t, exp, v)
 		return
 	}
 	t.Errorf("type of exp not handled, got %T", exp)
