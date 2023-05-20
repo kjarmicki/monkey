@@ -145,7 +145,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 
 		assert.NotNil(t, program, "ParseProgram() returned nil")
 		assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
-		testInfixExpression(t, program.Statements[0], tt.leftValue, tt.operator, tt.rightValue)
+		testInfixStatement(t, program.Statements[0], tt.leftValue, tt.operator, tt.rightValue)
 	}
 }
 
@@ -243,6 +243,29 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 	}
 }
 
+func TestIfExpression(t *testing.T) {
+	input := "if (x < y) { x }"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	assert.NotNil(t, program, "ParseProgram() returned nil")
+	assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	exp, ok := stmt.Expression.(*ast.IfExpression)
+	assert.True(t, ok)
+	testInfixExpression(t, exp.Condition, "x", "<", "y")
+	assert.Equal(t, len(exp.Consequence.Statements), 1)
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	testIdentifier(t, consequence.Expression, "x")
+	assert.Nil(t, exp.Alternative)
+}
+
 func testIdentifierExpression(t *testing.T, s ast.Statement, name string) {
 	t.Helper()
 	stmt, ok := s.(*ast.ExpressionStatement)
@@ -315,11 +338,15 @@ func testLiteralExpression(t *testing.T, exp ast.Expression, expected any) {
 	t.Errorf("type of exp not handled, got %T", exp)
 }
 
-func testInfixExpression(t *testing.T, s ast.Statement, leftValue any, operator string, rightValue any) {
+func testInfixStatement(t *testing.T, s ast.Statement, leftValue any, operator string, rightValue any) {
 	t.Helper()
 	stmt, ok := s.(*ast.ExpressionStatement)
 	assert.True(t, ok)
-	exp, ok := stmt.Expression.(*ast.InfixExpression)
+	testInfixExpression(t, stmt.Expression, leftValue, operator, rightValue)
+}
+
+func testInfixExpression(t *testing.T, ex ast.Expression, leftValue any, operator string, rightValue any) {
+	exp, ok := ex.(*ast.InfixExpression)
 	assert.True(t, ok)
 	testLiteralExpression(t, exp.Left, leftValue)
 	assert.Equal(t, operator, exp.Operator)
@@ -327,6 +354,7 @@ func testInfixExpression(t *testing.T, s ast.Statement, leftValue any, operator 
 }
 
 func checkParserErrors(t *testing.T, p *Parser) {
+	t.Helper()
 	errors := p.Errors()
 	if len(errors) == 0 {
 		return
