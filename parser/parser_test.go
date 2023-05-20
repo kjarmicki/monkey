@@ -266,6 +266,34 @@ func TestIfExpression(t *testing.T) {
 	assert.Nil(t, exp.Alternative)
 }
 
+func TestIfElseExpression(t *testing.T) {
+	input := "if (x < y) { x } else { y }"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	assert.NotNil(t, program, "ParseProgram() returned nil")
+	assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	exp, ok := stmt.Expression.(*ast.IfExpression)
+	assert.True(t, ok)
+	testInfixExpression(t, exp.Condition, "x", "<", "y")
+
+	assert.Equal(t, len(exp.Consequence.Statements), 1)
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	testIdentifier(t, consequence.Expression, "x")
+
+	assert.Equal(t, len(exp.Alternative.Statements), 1)
+	alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	testIdentifier(t, alternative.Expression, "y")
+}
+
 func testIdentifierExpression(t *testing.T, s ast.Statement, name string) {
 	t.Helper()
 	stmt, ok := s.(*ast.ExpressionStatement)
