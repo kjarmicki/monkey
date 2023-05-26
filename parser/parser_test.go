@@ -10,41 +10,54 @@ import (
 )
 
 func TestLetStatements(t *testing.T) {
-	input := `
-		let x = 5;
-		let y = 10;
-		let foobar = 838383;
-	`
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		expectedValue      any
+	}{
+		{"let x = 5;", "x", 5},
+		{"let y = true;", "y", true},
+		{"let foobar = y;", "foobar", "y"},
+	}
 
-	l := lexer.New(input)
-	p := New(l)
-	program := p.ParseProgram()
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
 
-	checkParserErrors(t, p)
-	assert.NotNil(t, program, "ParseProgram() returned nil")
-	assert.Equal(t, len(program.Statements), 3, "program.Statements does not contain 3 statements")
-	testLetStatement(t, program.Statements[0], "x")
-	testLetStatement(t, program.Statements[1], "y")
-	testLetStatement(t, program.Statements[2], "foobar")
+		checkParserErrors(t, p)
+		assert.NotNil(t, program, "ParseProgram() returned nil")
+		assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+		stmt := program.Statements[0]
+		testLetStatement(t, stmt, tt.expectedIdentifier)
+		val := stmt.(*ast.LetStatement).Value
+		testLiteralExpression(t, val, tt.expectedValue)
+	}
 }
 
-func TestReturnStatement(t *testing.T) {
-	input := `
-		return 5;
-		return 10;
-		return 993322;
-	`
+func TestReturnStatements(t *testing.T) {
+	tests := []struct {
+		input         string
+		expectedValue any
+	}{
+		{"return 5;", 5},
+		{"return true;", true},
+		{"return y;", "y"},
+	}
 
-	l := lexer.New(input)
-	p := New(l)
-	program := p.ParseProgram()
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
 
-	checkParserErrors(t, p)
-	assert.NotNil(t, program, "ParseProgram() returned nil")
-	assert.Equal(t, len(program.Statements), 3, "program.Statements does not contain 3 statements")
-	testReturnStatement(t, program.Statements[0], "5")
-	testReturnStatement(t, program.Statements[0], "10")
-	testReturnStatement(t, program.Statements[0], "993322")
+		checkParserErrors(t, p)
+		assert.NotNil(t, program, "ParseProgram() returned nil")
+		assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+		stmt := program.Statements[0]
+		testReturnStatement(t, stmt)
+		val := stmt.(*ast.ReturnStatement).ReturnValue
+		testLiteralExpression(t, val, tt.expectedValue)
+	}
 }
 
 func testLetStatement(t *testing.T, s ast.Statement, name string) {
@@ -149,7 +162,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 	}
 }
 
-func testReturnStatement(t *testing.T, s ast.Statement, name string) {
+func testReturnStatement(t *testing.T, s ast.Statement) {
 	t.Helper()
 	assert.Equal(t, s.TokenLiteral(), "return")
 	_, ok := s.(*ast.ReturnStatement)
