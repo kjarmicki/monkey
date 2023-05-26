@@ -294,7 +294,7 @@ func TestIfElseExpression(t *testing.T) {
 	testIdentifier(t, alternative.Expression, "y")
 }
 
-func TestFunctionLiteralParsing(t *testing.T) {
+func TestFunctionLiteral(t *testing.T) {
 	input := `fn(x, y) { x + y; }`
 
 	l := lexer.New(input)
@@ -316,6 +316,28 @@ func TestFunctionLiteralParsing(t *testing.T) {
 	bodyStmt, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
 	assert.True(t, ok)
 	testInfixExpression(t, bodyStmt.Expression, "x", "+", "y")
+}
+
+func TestCallExpression(t *testing.T) {
+	input := "add(1, 2 * 3, 4 + 5)"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	assert.NotNil(t, program, "ParseProgram() returned nil")
+	assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	exp, ok := stmt.Expression.(*ast.CallExpression)
+	assert.True(t, ok)
+	testIdentifier(t, exp.Function, "add")
+	assert.Equal(t, len(exp.Arguments), 3)
+	testLiteralExpression(t, exp.Arguments[0], 1)
+	testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
+	testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }
 
 func testIdentifierExpression(t *testing.T, s ast.Statement, name string) {
