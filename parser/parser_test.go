@@ -108,6 +108,19 @@ func TestBooleanExpression(t *testing.T) {
 	testBooleanExpression(t, program.Statements[0], true)
 }
 
+func TestStringLiteralExpression(t *testing.T) {
+	input := `"hello world"`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	assert.NotNil(t, program, "ParseProgram() returned nil")
+	assert.Equal(t, len(program.Statements), 1, "program.Statements does not contain 1 statement")
+	testStringLiteralExpression(t, program.Statements[0], "hello world")
+}
+
 func TestPrefixExpression(t *testing.T) {
 	prefixTests := []struct {
 		input    string
@@ -381,6 +394,19 @@ func testBoolean(t *testing.T, possiblyABoolean ast.Expression, value bool) {
 	boolean, ok := possiblyABoolean.(*ast.Boolean)
 	assert.True(t, ok)
 	assert.Equal(t, value, boolean.Value)
+}
+
+func testStringLiteralExpression(t *testing.T, s ast.Statement, value string) {
+	t.Helper()
+	stmt, ok := s.(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	testString(t, stmt.Expression, value)
+}
+
+func testString(t *testing.T, possiblyAString ast.Expression, value string) {
+	str, ok := possiblyAString.(*ast.StringLiteral)
+	assert.True(t, ok)
+	assert.Equal(t, value, str.Value)
 }
 
 func testIntegerLiteral(t *testing.T, possiblyAnInteger ast.Expression, value int64) {

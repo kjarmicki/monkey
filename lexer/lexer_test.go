@@ -192,3 +192,27 @@ func TestNextTokenLongOperators(t *testing.T) {
 		assert.Equal(t, tt.expectedLiteral, tok.Literal)
 	}
 }
+
+func TestNextTokenString(t *testing.T) {
+	input := `
+		"foobar"
+		"foo bar"
+	`
+
+	tests := []struct {
+		expectedType    token.TokenType
+		expectedLiteral string
+	}{
+		{token.STRING, "foobar"},
+		{token.STRING, "foo bar"},
+		{token.EOF, ""},
+	}
+
+	l := New(input)
+
+	for _, tt := range tests {
+		tok := l.NextToken()
+		assert.Equal(t, tt.expectedType, tok.Type)
+		assert.Equal(t, tt.expectedLiteral, tok.Literal)
+	}
+}
