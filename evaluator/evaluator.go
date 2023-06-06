@@ -64,6 +64,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return Eval(node.Expression, env)
 	case *ast.BlockStatement:
 		return evalBlockStatement(node, env)
+	case *ast.ArrayLiteral:
+		return evalArrayLiteral(node, env)
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
 	case *ast.PrefixExpression:
@@ -147,6 +149,14 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 		}
 	}
 	return result
+}
+
+func evalArrayLiteral(al *ast.ArrayLiteral, env *object.Environment) object.Object {
+	elements := evalExpressions(al.Elements, env)
+	if len(elements) == 1 && isError(elements[0]) {
+		return elements[0]
+	}
+	return &object.Array{Elements: elements}
 }
 
 func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
