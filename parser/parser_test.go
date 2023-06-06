@@ -366,6 +366,24 @@ func TestCallExpression(t *testing.T) {
 	testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }
 
+func TestParsingArrayLiterals(t *testing.T) {
+	input := "[1, 2 * 3, 4 + 5]"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	exp, ok := stmt.Expression.(*ast.ArrayLiteral)
+	assert.True(t, ok)
+	assert.Equal(t, 3, len(exp.Elements))
+	testIntegerLiteral(t, exp.Elements[0], 1)
+	testInfixExpression(t, exp.Elements[1], 2, "*", 3)
+	testInfixExpression(t, exp.Elements[2], 4, "+", 5)
+}
+
 func testIdentifierExpression(t *testing.T, s ast.Statement, name string) {
 	t.Helper()
 	stmt, ok := s.(*ast.ExpressionStatement)
