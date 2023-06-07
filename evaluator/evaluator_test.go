@@ -289,6 +289,9 @@ func TestBuilinFunctions(t *testing.T) {
 		// last
 		{`last([1, 2, 3])`, 3},
 		{`last([])`, nil},
+		// rest
+		{`rest([1, 2, 3])`, []int{2, 3}},
+		{`rest([])`, nil},
 	}
 
 	for _, tt := range tests {
@@ -301,6 +304,12 @@ func TestBuilinFunctions(t *testing.T) {
 			errObj, ok := evaluated.(*object.Error)
 			assert.True(t, ok)
 			assert.Equal(t, expected, errObj.Message)
+		case []int:
+			arrayObj, ok := evaluated.(*object.Array)
+			assert.True(t, ok)
+			for i, num := range expected {
+				testIntegerObject(t, arrayObj.Elements[i], int64(num))
+			}
 		}
 	}
 }
