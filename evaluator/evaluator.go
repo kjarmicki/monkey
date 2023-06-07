@@ -23,6 +23,9 @@ var builtins = map[string]*object.Builtin{
 			if str, ok := arg.(*object.String); ok {
 				return &object.Integer{Value: int64(len(str.Value))}
 			}
+			if arr, ok := arg.(*object.Array); ok {
+				return &object.Integer{Value: int64(len(arr.Elements))}
+			}
 			return newError("argument to `len` not supported, got %s", arg.Type())
 		},
 	},
