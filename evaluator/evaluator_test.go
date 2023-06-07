@@ -387,19 +387,34 @@ func TestArrayIndexExpressions(t *testing.T) {
 	}
 }
 
-// func TestExampleMapImplementation(t *testing.T) {
-// 	input := `
-// 		let map = fn(arr, f) {
-// 			let iter = fn(arr, accumulated) {
-// 				if (len(arr) == 0) {
-// 					accumulated
-// 				} else {
-// 					iter(rest(arr), push(accumulated, ))
-// 				}
-// 			}
-// 		}
-// 	`
-// }
+func TestExampleMapImplementation(t *testing.T) {
+	input := `
+		let map = fn(arr, f) {
+			let iter = fn(arr, accumulated) {
+				if (len(arr) == 0) {
+					accumulated;
+				} else {
+					iter(rest(arr), push(accumulated, f(first(arr))));
+				}
+			};
+			iter(arr, []);
+		};
+
+		let a = [1, 2, 3, 4, 5];
+		let double = fn(x) { x * 2 };
+		map(a, double);
+	`
+
+	evaluated := testEval(input)
+	result, ok := evaluated.(*object.Array)
+	assert.True(t, ok)
+	assert.Equal(t, 5, len(result.Elements))
+	testIntegerObject(t, result.Elements[0], 2)
+	testIntegerObject(t, result.Elements[1], 4)
+	testIntegerObject(t, result.Elements[2], 6)
+	testIntegerObject(t, result.Elements[3], 8)
+	testIntegerObject(t, result.Elements[4], 10)
+}
 
 func testEval(input string) object.Object {
 	l := lexer.New(input)
