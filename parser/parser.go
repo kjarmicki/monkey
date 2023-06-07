@@ -373,7 +373,7 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 	args := make([]ast.Expression, 0)
 
-	if p.peekTokenIs(token.RPAREN) {
+	if p.peekTokenIs(end) {
 		p.nextToken()
 		return args
 	}

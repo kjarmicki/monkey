@@ -292,6 +292,9 @@ func TestBuilinFunctions(t *testing.T) {
 		// rest
 		{`rest([1, 2, 3])`, []int{2, 3}},
 		{`rest([])`, nil},
+		// push
+		{`push([1, 2, 3], 4)`, []int{1, 2, 3, 4}},
+		{`push([], 1)`, []int{1}},
 	}
 
 	for _, tt := range tests {
@@ -383,6 +386,20 @@ func TestArrayIndexExpressions(t *testing.T) {
 		}
 	}
 }
+
+// func TestExampleMapImplementation(t *testing.T) {
+// 	input := `
+// 		let map = fn(arr, f) {
+// 			let iter = fn(arr, accumulated) {
+// 				if (len(arr) == 0) {
+// 					accumulated
+// 				} else {
+// 					iter(rest(arr), push(accumulated, ))
+// 				}
+// 			}
+// 		}
+// 	`
+// }
 
 func testEval(input string) object.Object {
 	l := lexer.New(input)
