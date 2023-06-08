@@ -241,3 +241,27 @@ func TestNextTokenBrackets(t *testing.T) {
 		assert.Equal(t, tt.expectedLiteral, tok.Literal)
 	}
 }
+
+func TestNextTokenHash(t *testing.T) {
+	input := `{"foo": "bar"}`
+
+	tests := []struct {
+		expectedType    token.TokenType
+		expectedLiteral string
+	}{
+		{token.LBRACE, "{"},
+		{token.STRING, "foo"},
+		{token.COLON, ":"},
+		{token.STRING, "bar"},
+		{token.RBRACE, "}"},
+		{token.EOF, ""},
+	}
+
+	l := New(input)
+
+	for _, tt := range tests {
+		tok := l.NextToken()
+		assert.Equal(t, tt.expectedType, tok.Type)
+		assert.Equal(t, tt.expectedLiteral, tok.Literal)
+	}
+}
