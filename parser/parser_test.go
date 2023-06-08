@@ -409,6 +409,83 @@ func TestParsingIndexExpressions(t *testing.T) {
 	testInfixExpression(t, exp.Index, 1, "+", 1)
 }
 
+func TestParsingHashLiteralsStringKeys(t *testing.T) {
+	input := `{"one": 1, "two": 2, "three": 3}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	hash, ok := stmt.Expression.(*ast.HashLiteral)
+	assert.True(t, ok)
+	assert.Equal(t, 3, len(hash.Pairs))
+
+	expected := map[string]int64{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+	for key, value := range hash.Pairs {
+		literal, ok := key.(*ast.StringLiteral)
+		assert.True(t, ok)
+		expectedValue := expected[literal.String()]
+		testIntegerLiteral(t, value, expectedValue)
+	}
+}
+
+func TestParsingHashLiteralsEmpty(t *testing.T) {
+	input := `{}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	hash, ok := stmt.Expression.(*ast.HashLiteral)
+	assert.True(t, ok)
+	assert.Equal(t, 0, len(hash.Pairs))
+}
+
+func TestParsingHashLiteralsWithExpressions(t *testing.T) {
+	input := `{"one": 1 + 2, "two": 3 - 4, "three": 5 * 6}`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	assert.True(t, ok)
+	hash, ok := stmt.Expression.(*ast.HashLiteral)
+	assert.True(t, ok)
+	assert.Equal(t, 3, len(hash.Pairs))
+
+	expected := map[string]func(ast.Expression){
+		"one": func(e ast.Expression) {
+			testInfixExpression(t, e, 1, "+", 2)
+		},
+		"two": func(e ast.Expression) {
+			testInfixExpression(t, e, 3, "-", 4)
+		},
+		"three": func(e ast.Expression) {
+			testInfixExpression(t, e, 5, "*", 6)
+		},
+	}
+
+	for key, value := range hash.Pairs {
+		literal, ok := key.(*ast.StringLiteral)
+		assert.True(t, ok)
+		testFunc, ok := expected[literal.String()]
+		assert.True(t, ok)
+		testFunc(value)
+	}
+}
+
 func testIdentifierExpression(t *testing.T, s ast.Statement, name string) {
 	t.Helper()
 	stmt, ok := s.(*ast.ExpressionStatement)
