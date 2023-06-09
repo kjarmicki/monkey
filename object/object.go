@@ -119,7 +119,7 @@ func (f *Function) Type() ObjectType {
 func (f *Function) Inspect() string {
 	var out bytes.Buffer
 
-	params := make([]string, 0)
+	params := make([]string, len(f.Parameters))
 	for _, p := range f.Parameters {
 		params = append(params, p.String())
 	}
@@ -174,9 +174,9 @@ func (a *Array) Type() ObjectType {
 
 func (a *Array) Inspect() string {
 	var out bytes.Buffer
-	elements := make([]string, 0)
-	for _, e := range a.Elements {
-		elements = append(elements, e.Inspect())
+	elements := make([]string, len(a.Elements))
+	for i, e := range a.Elements {
+		elements[i] = e.Inspect()
 	}
 	out.WriteString("[")
 	out.WriteString(strings.Join(elements, ", "))
@@ -203,7 +203,7 @@ func (h *Hash) Type() ObjectType {
 
 func (h *Hash) Inspect() string {
 	var out bytes.Buffer
-	pairs := make([]string, 0)
+	var pairs []string
 	for _, p := range h.Pairs {
 		pairs = append(pairs, fmt.Sprintf("%s: %s", p.Key.Inspect(), p.Value.Inspect()))
 	}

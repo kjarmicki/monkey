@@ -60,7 +60,7 @@ func New(l *lexer.Lexer) *Parser {
 	}
 
 	// register prefix parsers
-	p.prefixParseFns = make(map[token.TokenType]prefixParseFn, 0)
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
@@ -75,7 +75,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LBRACE, p.parseHashLiteral)
 
 	// register infix parsers
-	p.infixParseFns = make(map[token.TokenType]infixParseFn, 0)
+	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
@@ -396,7 +396,7 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
-	args := make([]ast.Expression, 0)
+	var args []ast.Expression
 
 	if p.peekTokenIs(end) {
 		p.nextToken()

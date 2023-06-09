@@ -302,9 +302,9 @@ func (ce *CallExpression) TokenLiteral() string {
 func (ce *CallExpression) String() string {
 	var out bytes.Buffer
 
-	args := make([]string, 0)
-	for _, a := range ce.Arguments {
-		args = append(args, a.String())
+	args := make([]string, len(ce.Arguments))
+	for i, a := range ce.Arguments {
+		args[i] = a.String()
 	}
 	out.WriteString(ce.Function.String())
 	out.WriteString("(")
@@ -341,9 +341,9 @@ func (al *ArrayLiteral) TokenLiteral() string {
 
 func (al *ArrayLiteral) String() string {
 	var out bytes.Buffer
-	elements := make([]string, 0)
-	for _, e := range al.Elements {
-		elements = append(elements, e.String())
+	elements := make([]string, len(al.Elements))
+	for i, e := range al.Elements {
+		elements[i] = e.String()
 	}
 
 	out.WriteString("[")
@@ -388,7 +388,7 @@ func (hl *HashLiteral) TokenLiteral() string {
 
 func (hl *HashLiteral) String() string {
 	var out bytes.Buffer
-	pairs := make([]string, 0)
+	var pairs []string
 	for k, v := range hl.Pairs {
 		pairs = append(pairs, k.String()+": "+v.String())
 	}
